@@ -2,7 +2,7 @@ import { Controller, Post, Get, Param, Body, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { Controller, Post, Get } from '@nestjs/common';
+import { LoginDto } from './dto/login';
 import { RegistrationDto } from './dto/registration';
 
 @Controller('auth')
@@ -25,7 +25,14 @@ export class AuthController {
   }
 
   @Post('login')
-  login() {}
+  async login(@Body() dto: LoginDto, @Res() response: Response) {
+    await this.authService.login(dto);
+
+    response.cookie('refreshToken', 1, {
+      maxAge: 30 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
+  }
 
   @Post('logout')
   logout() {}
@@ -40,5 +47,7 @@ export class AuthController {
   refresh() {}
 
   @Get('users')
-  getUsers() {}
+  getUsers() {
+    return [1, 2];
+  }
 }

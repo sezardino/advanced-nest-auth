@@ -3,8 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as uuid from 'uuid';
 import {
-  HttpException,
-  HttpStatus,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,7 +17,7 @@ import {
 } from 'src/common';
 
 import { RegistrationDto } from './dto';
-import { Injectable } from '@nestjs/common';
+import { LoginDto } from './dto/login';
 import { MailService } from '../mail/mail.service';
 import { TokenService } from '../token/token.service';
 
@@ -65,16 +64,31 @@ export class AuthService {
       `${this.configService.get('API_URL')}/auth/activate/${activationLink}`,
     );
 
-    const tokens = this.tokenService.generateToken({ email });
-
-    this.tokenService.saveToken(newUser._id, tokens.refreshToken);
+    const tokens = await this.saveTokens(newUser._id, { email });
 
     return { ...tokens, email, name, id: newUser._id };
   }
 
-  constructor() {}
+  async login(dto: LoginDto): Promise<string> {
+    const { email, password } = dto;
+    const neededUser = await this.getUser(email);
 
-  async getUser() {}
+    if (!neededUser) {
+      throw new BadRequestException(messages.USER_NOT_FOUND);
+    }
+
+    const passwordMatch = isPasswordValid(password, neededUser.password);
+
+    if (!passwordMatch) {
+      throw new BadRequestException(messages.PASSWORD_MISMATCH);
+    }
+
+    const tokens = await this.saveTokens(neededUser._id, { email });
+
+    return tokens.accessToken;
+  }
+
+  async logout(): Promise<void> {}
 
   async activation(link: string): Promise<void> {
     const neededUser = await this.userModel.findOne({ activationLink: link });
@@ -91,7 +105,21 @@ export class AuthService {
     await neededUser.save();
   }
 
-  refresh() {}
+  async refresh(): Promise<void> {}
 
-  getUsers() {}
+  async getUsers(): Promise<void> {}
+
+  async saveTokens(
+    userId: string,
+    payload: Record<string, any>,
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const tokens = this.tokenService.generateToken(payload);
+
+    this.tokenService.saveToken(userId, tokens.refreshToken);
+
+    return tokens;
+  }
 }
