@@ -76,13 +76,20 @@ export class AuthService {
 
   async getUser() {}
 
-  registration() {}
+  async activation(link: string): Promise<void> {
+    const neededUser = await this.userModel.findOne({ activationLink: link });
 
-  login() {}
+    if (!neededUser) {
+      throw new NotFoundException(messages.USER_NOT_FOUND);
+    }
 
-  logout() {}
+    if (neededUser.isActivated) {
+      throw new NotFoundException(messages.ALREADY_ACTIVATED);
+    }
 
-  activate() {}
+    neededUser.isActivated = true;
+    await neededUser.save();
+  }
 
   refresh() {}
 
