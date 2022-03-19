@@ -1,6 +1,15 @@
-import { Controller, Post, Get, Param, Body, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login';
 import { RegistrationDto } from './dto/registration';
@@ -34,8 +43,17 @@ export class AuthController {
     });
   }
 
-  @Post('logout')
-  logout() {}
+  @Get('logout')
+  async logout(@Req() request: Request, @Res() response: Response) {
+    const { refreshToken } = request.cookies;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException(messages.NOT_AUTHORIZED);
+    }
+
+    await this.authService.logout(refreshToken);
+    response.clearCookie(refreshToken);
+  }
 
   @Get('activate/:link')
   async activate(@Res() response: Response, @Param('link') link: string) {

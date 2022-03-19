@@ -23,7 +23,10 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  async saveToken(userId: string, refreshToken): Promise<TokenDocument> {
+  async saveToken(
+    userId: string,
+    refreshToken: string,
+  ): Promise<TokenDocument> {
     const neededToken = await this.tokenModel.findOne({ userId });
 
     if (neededToken) {
@@ -35,5 +38,9 @@ export class TokenService {
     const newToken = await this.tokenModel.create({ userId, refreshToken });
 
     return await newToken.save();
+  }
+
+  async deleteToken(refreshToken: string): Promise<void> {
+    return await this.tokenModel.findOneAndDelete({ refreshToken });
   }
 }
