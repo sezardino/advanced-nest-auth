@@ -20,7 +20,13 @@ export class TokenService {
       isRefresh ? 'JWT_REFRESH_SECRET' : 'JWT_ACCESS_SECRET',
     );
 
-    const userData = this.jwtService.verify(token, { secret });
+    let userData: any;
+
+    try {
+      userData = this.jwtService.verify(token, { secret });
+    } catch (error) {
+      return null;
+    }
 
     if (!userData) {
       return null;
