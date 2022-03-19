@@ -81,11 +81,4 @@ export class TokenService {
   async deleteToken(refreshToken: string): Promise<void> {
     return await this.tokenModel.findOneAndDelete({ refreshToken });
   }
-
-  v(token: string, isRefresh = false) {
-    const secret = this.configService.get(
-      isRefresh ? 'JWT_REFRESH_SECRET' : 'JWT_ACCESS_SECRET',
-    );
-    console.log(this.jwtService.verify(token));
-  }
 }
