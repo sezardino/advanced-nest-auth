@@ -47,10 +47,6 @@ export class AuthController {
   async logout(@Req() request: Request, @Res() response: Response) {
     const { refreshToken } = request.cookies;
 
-    if (!refreshToken) {
-      throw new UnauthorizedException(messages.NOT_AUTHORIZED);
-    }
-
     await this.authService.logout(refreshToken);
     response.clearCookie(refreshToken);
   }
@@ -62,7 +58,11 @@ export class AuthController {
   }
 
   @Get('refresh')
-  refresh() {}
+  async refresh(@Req() request: Request) {
+    const { refreshToken } = request.cookies;
+
+    await this.authService.refresh(refreshToken);
+  }
 
   @Get('users')
   getUsers() {

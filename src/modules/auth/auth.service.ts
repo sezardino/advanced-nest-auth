@@ -6,6 +6,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { UserDocument } from 'src/models';
@@ -14,6 +15,8 @@ import {
   isPasswordValid,
   messages,
   Models,
+  TokenPayload,
+  Tokens,
 } from 'src/common';
 
 import { RegistrationDto } from './dto';
@@ -107,20 +110,33 @@ export class AuthService {
     await neededUser.save();
   }
 
-  async refresh(): Promise<void> {}
+  async refresh(refreshToken?: string): Promise<Tokens> {
+    if (!refreshToken) {
+      throw new UnauthorizedException(messages.NOT_AUTHORIZED);
+    }
+
+    const tokenData = await this.tokenService.findToken(refreshToken);
+    const userData = this.tokenService.validateToken(refreshToken, true);
+
+    if (!tokenData || !userData) {
+      throw new UnauthorizedException(messages.NOT_AUTHORIZED);
+    }
+
+    const user = await this.userModel.findById(userData.userId);
+    const newTokens = await this.saveTokens(user._id, { email: user.email });
+
+    return newTokens;
+  }
 
   async getUsers(): Promise<void> {}
 
   async saveTokens(
     userId: string,
-    payload: Record<string, any>,
-  ): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
+    payload: Pick<TokenPayload, 'email'>,
+  ): Promise<Tokens> {
     const tokens = this.tokenService.generateToken(payload);
 
-    this.tokenService.saveToken(userId, tokens.refreshToken);
+    await this.tokenService.saveToken(userId, tokens.refreshToken);
 
     return tokens;
   }
