@@ -6,10 +6,11 @@ import {
   Body,
   Req,
   Res,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { AuthGuard } from 'src/guards';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login';
 import { RegistrationDto } from './dto/registration';
@@ -35,12 +36,14 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() dto: LoginDto, @Res() response: Response) {
-    await this.authService.login(dto);
+    const token = await this.authService.login(dto);
 
     response.cookie('refreshToken', 1, {
       maxAge: 30 * 60 * 60 * 1000,
       httpOnly: true,
     });
+
+    return { token };
   }
 
   @Get('logout')
@@ -64,8 +67,9 @@ export class AuthController {
     await this.authService.refresh(refreshToken);
   }
 
+  @UseGuards(AuthGuard)
   @Get('users')
-  getUsers() {
-    return [1, 2];
+  async getUsers() {
+    return await this.authService.getUsers();
   }
 }

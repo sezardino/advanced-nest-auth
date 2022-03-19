@@ -128,7 +128,11 @@ export class AuthService {
     return newTokens;
   }
 
-  async getUsers(): Promise<void> {}
+  async getUsers(): Promise<UserDocument[]> {
+    const users = await this.userModel.find();
+
+    return users;
+  }
 
   async saveTokens(
     userId: string,
