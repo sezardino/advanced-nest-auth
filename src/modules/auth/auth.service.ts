@@ -88,7 +88,9 @@ export class AuthService {
     return tokens.accessToken;
   }
 
-  async logout(): Promise<void> {}
+  async logout(token: string): Promise<void> {
+    this.tokenService.deleteToken(token);
+  }
 
   async activation(link: string): Promise<void> {
     const neededUser = await this.userModel.findOne({ activationLink: link });
